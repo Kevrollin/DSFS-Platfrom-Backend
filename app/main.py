@@ -17,7 +17,10 @@ from pydantic import BaseModel # Import BaseModel for defining schemas in OpenAP
 app = FastAPI(
     title="Decentralized Funding API",
     description="API for decentralized crowdfunding platform",
-    version="1.0.0", # Disable default OpenAPI schema
+    version="1.0.0",
+    docs_url="/docs",         # Enable Swagger UI at /docs
+    redoc_url="/redoc",       # Enable ReDoc at /redoc
+    openapi_url="/openapi.json"  # Enable OpenAPI schema
 )
 
 # Add CORS middleware
