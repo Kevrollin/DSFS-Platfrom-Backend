@@ -1,0 +1,1 @@
+This module will handle the creation, funding, and querying of Stellar accounts for your application and student

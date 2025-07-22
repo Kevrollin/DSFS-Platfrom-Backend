@@ -1,0 +1,220 @@
+openapi: 3.0.3
+info:
+  title: Decentralized Student Funding Platform - API
+  description: REST API for MVP backend using Node.js, Express, MongoDB, and Stellar SDK
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5000/api
+    description: Local development server
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Projects
+  - name: Transactions
+  - name: Reports
+  - name: Stellar
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUser'
+      responses:
+        '201':
+          description: User registered successfully
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUser'
+      responses:
+        '200':
+          description: Login successful
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User data
+
+  /projects:
+    post:
+      tags: [Projects]
+      summary: Submit a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+      responses:
+        '201':
+          description: Project created
+
+    get:
+      tags: [Projects]
+      summary: Get all projects
+      responses:
+        '200':
+          description: List of projects
+
+  /projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Get a project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Project data
+
+  /transactions:
+    post:
+      tags: [Transactions]
+      summary: Record a funding transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '201':
+          description: Transaction recorded
+
+  /reports:
+    post:
+      tags: [Reports]
+      summary: Submit a progress report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Report'
+      responses:
+        '201':
+          description: Report submitted
+
+  /stellar/account/{publicKey}:
+    get:
+      tags: [Stellar]
+      summary: Get Stellar account balance
+      parameters:
+        - name: publicKey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account balance retrieved
+
+components:
+  schemas:
+    RegisterUser:
+      type: object
+      required: [email, password, role]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [student, donor, admin]
+
+    LoginUser:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    Project:
+      type: object
+      required: [studentId, title, description, fundingGoal]
+      properties:
+        studentId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected, funded, completed]
+        fundingGoal:
+          type: number
+        mediaUrls:
+          type: array
+          items:
+            type: string
+
+    Transaction:
+      type: object
+      required: [donorId, amount, asset, type]
+      properties:
+        donorId:
+          type: string
+        projectId:
+          type: string
+        studentId:
+          type: string
+        amount:
+          type: number
+        asset:
+          type: string
+        stellarTransactionId:
+          type: string
+        type:
+          type: string
+          enum: [deposit, allocation, withdrawal]
+        status:
+          type: string
+          enum: [pending, success, failed]
+
+    Report:
+      type: object
+      required: [projectId, studentId, reportText]
+      properties:
+        projectId:
+          type: string
+        studentId:
+          type: string
+        reportText:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
