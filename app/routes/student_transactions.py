@@ -6,6 +6,7 @@ from stellar_sdk import Optional
 
 from app.stellar_utils.account_management.get_account_balances import get_account_balances
 # Import necessary modules
+from app.core.auth import require_student
 from ..core.database import Database
 from ..core.auth import get_current_user # Assuming this fetches the User model with keys
 from ..models.models import User, UserRole
@@ -14,7 +15,11 @@ from ..stellar_utils.key_security import decrypt_secret_key
 from ..stellar_utils.transaction_operations.transaction_operations import send_stellar_payment # Assuming this is where send_stellar_payment is
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/api/student",
+    tags=["student"],
+    dependencies=[Depends(require_student)]
+)
 
 # Pydantic model for the request body when sending XLM
 class SendXlmRequest(BaseModel):
@@ -22,7 +27,7 @@ class SendXlmRequest(BaseModel):
     amount: float # Allow float input, convert to string for Stellar
     memo_text: Optional[str] = None # Optional memo
 
-@router.post("/student/send_xlm", status_code=status.HTTP_200_OK)
+@router.post("/send_xlm", status_code=status.HTTP_200_OK)
 async def student_send_xlm(
     request_data: SendXlmRequest,
     current_user: User = Depends(get_current_user) # Authenticate user
@@ -99,7 +104,7 @@ async def student_send_xlm(
         )
         
         
-@router.get("/student/balance", status_code=status.HTTP_200_OK)
+@router.get("/balance", status_code=status.HTTP_200_OK)
 async def get_student_balance(
     current_user: User = Depends(get_current_user)
 ):

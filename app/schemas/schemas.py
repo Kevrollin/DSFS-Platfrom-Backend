@@ -224,3 +224,54 @@ class TokenResponse(BaseModel):
             }
         }
     )
+
+class RegisterUser(BaseModel):
+    first_name: str
+    last_name: str
+    username: str
+    email: EmailStr
+    school: str
+    expected_graduation_year: int = Field(..., ge=2025)
+    stellar_wallet: Optional[str] = None
+    password: str
+    confirm_password: str
+
+class RegisterDonor(BaseModel):
+    first_name: str
+    last_name: str
+    username: str
+    email: EmailStr
+    organization: Optional[str] = None
+    preferred_categories: Optional[List[str]] = Field(default_factory=list)
+    stellar_wallet: Optional[str] = None
+    password: str
+    confirm_password: str
+
+class StudentProfile(BaseModel):
+    institution: str
+    student_id: str
+    field_of_study: str
+    year_of_study: int
+    is_verified: bool = False
+    school: str
+    expected_graduation_year: int = Field(..., ge=2025)
+
+class DonorProfile(BaseModel):
+    organization: Optional[str] = None
+    preferred_categories: List[str] = Field(default_factory=list)
+    donation_history: List[str] = Field(default_factory=list)
+    total_donated: float = 0.0
+
+class User(BaseModel):
+    id: Optional[str]
+    email: EmailStr
+    username: str
+    first_name: str
+    last_name: str
+    full_name: Optional[str] = None
+    stellar_wallet: Optional[str] = None
+    role: str
+    student_profile: Optional[StudentProfile] = None
+    donor_profile: Optional[DonorProfile] = None
+    created_at: Optional[str]
+    updated_at: Optional[str]

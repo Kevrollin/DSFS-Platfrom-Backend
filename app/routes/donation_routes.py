@@ -1,9 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from ..models.models import Transaction
 from ..schemas.schemas import DonationCreate
 from ..core.database import Database
+from app.core.auth import require_donor
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/api/donor",
+    tags=["donor"],
+    dependencies=[Depends(require_donor)]
+)
 
 @router.post("/", response_model=Transaction)
 async def create_donation(donation: DonationCreate):

@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from ..models.models import User, UserBase
+from ..models.models import User, UserBase, UserRole
 from .database import Database
 import os
 from dotenv import load_dotenv
@@ -99,4 +99,14 @@ async def get_current_admin(current_user: User = Depends(get_current_user)):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
+    return current_user
+
+def require_student(current_user=Depends(get_current_user)):
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Students only.")
+    return current_user
+
+def require_donor(current_user=Depends(get_current_user)):
+    if current_user.role != UserRole.DONOR:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Donors only.")
     return current_user
