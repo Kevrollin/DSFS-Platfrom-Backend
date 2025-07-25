@@ -67,11 +67,7 @@ class RegisterUser(BaseModel):
 class RegisterDonor(BaseModel):
     first_name: str
     last_name: str
-    username: str
     email: EmailStr
-    organization: Optional[str] = None
-    preferred_categories: Optional[List[str]] = Field(default_factory=list)
-    stellar_wallet: Optional[str] = None
     password: str
     confirm_password: str
 

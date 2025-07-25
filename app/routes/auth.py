@@ -30,6 +30,7 @@ class LoginResponse(BaseModel):
     token_type: str
     role: str
     stellar_public_key: Optional[str] = None
+    first_name: Optional[str] = None
 
 @router.post("/register")
 async def signup(user: RegisterUser):
@@ -189,37 +190,29 @@ async def register_student(user: RegisterUser):
 @router.post("/register/donor")
 async def register_donor(user: RegisterDonor):
     db = Database.get_db()
-    # Check if email or username is already registered
+    # Check if email is already registered
     if await db["users"].find_one({"email": user.email}):
         raise HTTPException(status_code=400, detail="Email already registered")
-    if await db["users"].find_one({"username": user.username}):
-        raise HTTPException(status_code=400, detail="Username already registered")
-    # --- Generate and Encrypt Stellar Keypair if not provided ---
-    if user.stellar_wallet:
-        public_key = user.stellar_wallet
-        encrypted_secret = None
-    else:
-        try:
-            stellar_keys = generate_stellar_keypair()
-            encrypted_secret = encrypt_secret_key(stellar_keys["secret_key"])
-            public_key = stellar_keys["public_key"]
-        except Exception as e:
-            print(f"Error during Stellar key generation or encryption: {e}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to generate Stellar account.")
+    # --- Generate and Encrypt Stellar Keypair ---
+    try:
+        stellar_keys = generate_stellar_keypair()
+        encrypted_secret = encrypt_secret_key(stellar_keys["secret_key"])
+        public_key = stellar_keys["public_key"]
+    except Exception as e:
+        print(f"Error during Stellar key generation or encryption: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to generate Stellar account.")
     # -----------------------------------------------------------
     user_dict = {
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "username": user.username,
         "email": user.email,
         "password_hash": get_password_hash(user.password),
         "role": UserRole.DONOR.value,
         "stellar_public_key": public_key,
         "stellar_secret_key_encrypted": encrypted_secret,
-        "stellar_wallet": user.stellar_wallet,
         "donor_profile": {
-            "organization": user.organization,
-            "preferred_categories": user.preferred_categories or [],
+            "organization": None,
+            "preferred_categories": [],
             "donation_history": [],
             "total_donated": 0.0
         },
@@ -232,18 +225,11 @@ async def register_donor(user: RegisterDonor):
     except Exception as e:
         print(f"Error inserting user into database: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create user.")
-    if not user.stellar_wallet:
-        funding_success = await fund_testnet_account(public_key)
-        if not funding_success:
-            print(f"Warning: Failed to fund new account {public_key} on Testnet.")
     return {
         "email": created_user["email"],
-        "username": created_user["username"],
         "first_name": created_user["first_name"],
         "last_name": created_user["last_name"],
         "stellar_public_key": created_user.get("stellar_public_key"),
-        "organization": created_user["donor_profile"]["organization"],
-        "preferred_categories": created_user["donor_profile"]["preferred_categories"],
         "role": created_user["role"],
         "message": "Donor registered successfully. Stellar account generated."
     }
@@ -256,7 +242,7 @@ async def register_donor(user: RegisterDonor):
     "/login",
     response_model=LoginResponse,
     summary="Login (role-based)",
-    description="Login for both students and donors. Returns JWT and user role."
+    description="Login for both students and donors. Returns JWT, user role, and first name."
 )
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     db = Database.get_db()
@@ -280,7 +266,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         "access_token": access_token,
         "token_type": "bearer",
         "role": user["role"],
-        "stellar_public_key": user.get("stellar_public_key") # Include public key in login response
+        "stellar_public_key": user.get("stellar_public_key"),
+        "first_name": user.get("first_name"),
     }
 
 @router.get("/me")
